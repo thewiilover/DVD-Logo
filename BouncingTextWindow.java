@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.util.Random;
 
 public class BouncingTextWindow {
     // Constants for default image and text behavior
@@ -17,11 +18,20 @@ public class BouncingTextWindow {
     static int imageHeight = 480; // Default image height
     private static boolean fullscreenKeybindEnabled = false; // Toggle fullscreen keybind
     private static boolean isFullscreen = false; // Track fullscreen state
+    static boolean isPartyMode = false;  // Track party mode state
     private static JFrame frame;
 
     public static void main(String[] args) {
-        // Create the main application window
-        frame = new JFrame("DVD Logo"); 
+        // Check if Party Mode is enabled via command-line arguments
+        for (String arg : args) {
+            if (arg.equals("-pm") || arg.equals("--party")) {
+                isPartyMode = true;
+                System.out.println("Party Mode Enabled!");
+            }
+        }
+
+        // Create the main application window with title "DVD Logo"
+        frame = new JFrame("DVD Logo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600); // Adjust frame size to accommodate content
 
@@ -146,11 +156,12 @@ class BouncingTextPanel extends JPanel implements ActionListener {
     private int textY = 50;
     private int textDX = BouncingTextWindow.TEXT_SPEED; // Speed for x direction
     private int textDY = BouncingTextWindow.TEXT_SPEED; // Speed for y direction
-    private String text = "Bouncing Text";
+    private String text = "DVD Logo";
     private BufferedImage image = null;
+    private Random random = new Random();
 
     public BouncingTextPanel() {
-        // Set the background color to black
+        // Set the background color to black initially
         setBackground(Color.BLACK);
         timer = new Timer(10, this); // Update every 10 milliseconds
         timer.start();
@@ -194,6 +205,11 @@ class BouncingTextPanel extends JPanel implements ActionListener {
             }
         }
 
+        // If Party Mode is enabled, change the background color randomly
+        if (BouncingTextWindow.isPartyMode) {
+            setBackground(new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
+        }
+
         repaint();
     }
 
@@ -211,19 +227,8 @@ class BouncingTextPanel extends JPanel implements ActionListener {
                 if (originalImage == null) {
                     throw new IllegalArgumentException("The selected file is not a valid image.");
                 }
-
-                // Resize the image to the current selected size
-                image = new BufferedImage(BouncingTextWindow.imageWidth, BouncingTextWindow.imageHeight, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g2d = image.createGraphics();
-                g2d.drawImage(originalImage, 0, 0, BouncingTextWindow.imageWidth, BouncingTextWindow.imageHeight, null);
-                g2d.dispose();
-
-                // Reset text position and speed for new image
-                textX = 0;
-                textY = 50;
-                textDX = BouncingTextWindow.TEXT_SPEED;
-                textDY = BouncingTextWindow.TEXT_SPEED;
-                repaint();
+                image = originalImage;
+                updateImageSize(BouncingTextWindow.imageWidth, BouncingTextWindow.imageHeight);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error loading image: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
